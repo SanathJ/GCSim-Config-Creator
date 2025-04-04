@@ -5,32 +5,35 @@ import sqlite3
 
 characters = {}
 
-to_load = ['HuTao', 'Yelan', 'Furina', 'Clorinde', 'Xilonen']
+to_load = ["HuTao", "Yelan", "Furina", "Clorinde", "Xilonen"]
+
 
 def load():
     db = {}
-    with open('export.json', "r") as f:
+    with open("export.json", "r") as f:
         db = json.load(f)
 
-    for char in db['characters']:
-        if char['key'].startswith('Traveler'):
-            char['key'] = 'Traveler'
+    for char in db["characters"]:
+        if char["key"].startswith("Traveler"):
+            char["key"] = "Traveler"
 
-        characters[char['key']] = char
+        characters[char["key"]] = char
 
-    for weapon in db['weapons']:
-        if weapon['location']:
-            characters[weapon['location']]['weapon'] = weapon
+    for weapon in db["weapons"]:
+        if weapon["location"]:
+            characters[weapon["location"]]["weapon"] = weapon
 
-    for artifact in db['artifacts']:
-        if artifact['location']:
-            characters[artifact['location']][artifact['slotKey']] = artifact
+    for artifact in db["artifacts"]:
+        if artifact["location"]:
+            characters[artifact["location"]][artifact["slotKey"]] = artifact
+
 
 def export():
-    with sqlite3.connect('configs.db') as con:
+    with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
 
-        cursor.execute('''
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS Characters (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -45,9 +48,11 @@ def export():
                 goblet INTEGER NOT NULL REFERENCES Artifacts(id) ON UPDATE RESTRICT,
                 circlet INTEGER NOT NULL REFERENCES Artifacts(id) ON UPDATE RESTRICT
             );
-        ''')
-    
-        cursor.execute('''
+        """
+        )
+
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS Weapons (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -55,9 +60,11 @@ def export():
                 level INTEGER NOT NULL,
                 ascension INTEGER NOT NULL
             );
-        ''')
-    
-        cursor.execute('''
+        """
+        )
+
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS Artifacts(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 setKey TEXT NOT NULL,
@@ -67,42 +74,66 @@ def export():
                 mainStat TEXT NOT NULL,
                 substats TEXT NOT NULL
             );
-        ''')
+        """
+        )
         con.commit()
 
         for char in to_load:
             character = characters[char]
-            weap = character['weapon']
+            weap = character["weapon"]
             ids = {}
-            ids['key'] = character['key']
+            ids["key"] = character["key"]
 
-            row = cursor.execute('''
+            row = cursor.execute(
+                """
             INSERT INTO weapons (name, refinement, level, ascension)
             VALUES (?,?,?,?)
             RETURNING id
-            ''',
-            (weap['key'], weap['refinement'], weap['level'], weap['ascension']))
-            ids['weapon'] = row.fetchone()[0]
+            """,
+                (weap["key"], weap["refinement"], weap["level"], weap["ascension"]),
+            )
+            ids["weapon"] = row.fetchone()[0]
 
-            
-            for x in ['plume', 'flower', 'goblet', 'sands', 'circlet']:
-                artifact = (character[x]['setKey'], character[x]['rarity'], character[x]['level'], character[x]['slotKey'], character[x]['mainStatKey'], f'{ json.dumps({"substats": character[x]['substats']}) }')
-                row = cursor.execute('''
+            for x in ["plume", "flower", "goblet", "sands", "circlet"]:
+                artifact = (
+                    character[x]["setKey"],
+                    character[x]["rarity"],
+                    character[x]["level"],
+                    character[x]["slotKey"],
+                    character[x]["mainStatKey"],
+                    f'{ json.dumps({"substats": character[x]['substats']}) }',
+                )
+                row = cursor.execute(
+                    """
                 INSERT INTO artifacts (setKey, rarity, level, slotKey, mainStat, substats)
                 VALUES (?,?,?,?,?,?)
                 RETURNING id
-                ''',
-                artifact)
+                """,
+                    artifact,
+                )
                 ids[x] = row.fetchone()[0]
-            
-            cursor.execute('''
+
+            cursor.execute(
+                """
                 INSERT INTO characters (name, level, ascension, talent, constellation, weapon, flower, plume, sands, goblet, circlet)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?)
-                ''',
-                (character['key'], character['level'], character['ascension'], f"{character['talent']['auto']},{character['talent']['skill']},{character['talent']['burst']}",
-                 character['constellation'], ids['weapon'], ids['flower'], ids['plume'], ids['sands'], ids['goblet'], ids['circlet']))
+                """,
+                (
+                    character["key"],
+                    character["level"],
+                    character["ascension"],
+                    f"{character['talent']['auto']},{character['talent']['skill']},{character['talent']['burst']}",
+                    character["constellation"],
+                    ids["weapon"],
+                    ids["flower"],
+                    ids["plume"],
+                    ids["sands"],
+                    ids["goblet"],
+                    ids["circlet"],
+                ),
+            )
             con.commit()
-        
+
 
 load()
 export()
