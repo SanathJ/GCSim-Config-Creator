@@ -76,6 +76,23 @@ def export():
             );
         """
         )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS Character_Configs(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                config_name TEXT UNIQUE NOT NULL,
+                character TEXT NOT NULL,
+                constellation INTEGER NOT NULL,
+                level TEXT NOT NULL,
+                talent TEXT NOT NULL,
+                weapon TEXT NOT NULL,
+                refine INTEGER NOT NULL,
+                config TEXT NOT NULL
+            );
+        """
+        )
+
         con.commit()
 
         for char in to_load:

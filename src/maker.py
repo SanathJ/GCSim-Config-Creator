@@ -131,18 +131,50 @@ def makeCharConfig(c):
 
         con.commit()
 
-        return charToConfig(char)
+        return {
+            "config": charToConfig(char),
+            "character": row["name"],
+            "constellation": char["cons"],
+            "level": char["lvl"],
+            "talent": char["talent"],
+            "weapon": weap["name"],
+            "refine": weap["refinement"],
+        }
 
 
 def makeTeamConfig(team):
-    config = "\n".join([makeCharConfig(c) for c in team])
+    config = "\n".join([makeCharConfig(c)["config"] for c in team])
     return config
 
 
 def writeConfig(outfile, team):
     with open(outfile, "w") as f:
-        f.write(makeTeamConfig(team))
+        f.write(makeTeamConfig(team)["config"])
+
+
+def saveConfig(c, name):
+    with sqlite3.connect("configs.db") as con:
+        cursor = con.cursor()
+
+        details = makeCharConfig(c)
+
+        cursor.execute(
+            """
+            INSERT INTO Character_Configs (config_name, character, constellation, level, talent, weapon, refine, config)
+            VALUES (?,?,?,?,?,?,?,?)
+            """,
+            (
+                name,
+                details["character"],
+                details["constellation"],
+                details["level"],
+                details["talent"],
+                details["weapon"],
+                details["refine"],
+                details["config"],
+            ),
+        )
 
 
 team = ["HuTao", "Furina", "Yelan", "Xilonen"]
-writeConfig(output_file, team)
+[saveConfig(c, c + " v1") for c in team]
