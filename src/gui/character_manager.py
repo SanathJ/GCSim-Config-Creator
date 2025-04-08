@@ -7,7 +7,7 @@ import sqlite3
 import util
 
 
-def refresh_textbox(e, display_config, tree):
+def refresh_textbox(display_config, tree):
     display_config.configure(state="normal")
     display_config.delete("1.0", "end")
     if tree.selection():
@@ -15,7 +15,7 @@ def refresh_textbox(e, display_config, tree):
     display_config.configure(state="disabled")
 
 
-def refresh_treeview(e, tree):
+def refresh_treeview(tree: ttk.Treeview):
     with sqlite3.connect("configs.db") as con:
         con.row_factory = util.dict_factory
 
@@ -48,6 +48,13 @@ def refresh_treeview(e, tree):
             )
 
 
+g_tree = None
+
+
+def refresh_character_manager_tree():
+    refresh_treeview(g_tree)
+
+
 def delete_char_config(display_config, tree):
     if not tree.selection():
         return
@@ -70,8 +77,8 @@ def delete_char_config(display_config, tree):
 
             con.commit()
 
-    refresh_textbox(None, display_config, tree)
-    refresh_treeview(None, tree)
+    refresh_textbox(display_config, tree)
+    refresh_treeview(tree)
 
 
 def rename_char_config(root, display_config, tree):
@@ -143,8 +150,8 @@ def rename_char_config(root, display_config, tree):
         rename_dialog.wait_window()
 
     open_rename_dialog(tree.selection())
-    refresh_textbox(None, display_config, tree)
-    refresh_treeview(None, tree)
+    refresh_textbox(display_config, tree)
+    refresh_treeview(tree)
 
 
 def setup_character_manager_frame(root, notebook):
@@ -189,6 +196,8 @@ def setup_character_manager_frame(root, notebook):
         tree.column(x, anchor="center", width=width)
         tree.heading(x, text="Config Name" if x == "#0" else x.title())
     tree.grid(column=0, row=0)
+    global g_tree
+    g_tree = tree
 
     tree_s = ttk.Scrollbar(
         main_config_manager_frame, orient=VERTICAL, command=tree.yview
@@ -198,7 +207,7 @@ def setup_character_manager_frame(root, notebook):
 
     display_config = ScrolledText(main_config_manager_frame)
     display_config.grid(column=0, row=1, columnspan=2, sticky=(E, W, S))
-    tree.bind("<<TreeviewSelect>>", lambda e: refresh_textbox(e, display_config, tree))
+    tree.bind("<<TreeviewSelect>>", lambda e: refresh_textbox(display_config, tree))
 
     # buttons
     ttk.Button(
@@ -214,5 +223,5 @@ def setup_character_manager_frame(root, notebook):
 
     display_config.configure(state="disabled")
 
-    refresh_treeview(None, tree)
+    refresh_treeview(tree)
     return character_manager_frame

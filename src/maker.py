@@ -1,6 +1,4 @@
 # uses sqlite database to create gcsim config files, ready to be used with optimisation
-output_file = "sim_config.txt"
-
 import util
 import sqlite3
 import json
@@ -112,6 +110,8 @@ def makeCharConfig(c):
                 ]
 
             for substat in json.loads(artifact["substats"])["substats"]:
+                if substat["key"] == "":
+                    continue
                 divider = 1
                 if substat["key"].endswith("_"):
                     divider = 100
@@ -160,7 +160,7 @@ def saveConfig(c, name):
 
         cursor.execute(
             """
-            INSERT INTO Character_Configs (config_name, character, constellation, level, talent, weapon, refine, config)
+            INSERT OR REPLACE INTO Character_Configs (config_name, character, constellation, level, talent, weapon, refine, config)
             VALUES (?,?,?,?,?,?,?,?)
             """,
             (
@@ -174,7 +174,3 @@ def saveConfig(c, name):
                 details["config"],
             ),
         )
-
-
-team = ["HuTao", "Furina", "Yelan", "Xilonen"]
-[saveConfig(c, c + " v1") for c in team]
