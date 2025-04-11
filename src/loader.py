@@ -98,6 +98,20 @@ def create_table():
             """
         )
 
+        cursor.execute(
+            """
+                CREATE TABLE IF NOT EXISTS Full_Configs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    config_name TEXT UNIQUE NOT NULL,
+                    character1 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
+                    character2 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
+                    character3 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
+                    character4 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
+                    rotation TEXT REFERENCES Rotation_Configs(config_name) ON UPDATE RESTRICT
+                );
+            """
+        )
+
         con.commit()
 
 
