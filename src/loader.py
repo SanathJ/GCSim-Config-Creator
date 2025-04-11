@@ -88,6 +88,16 @@ def create_table():
             """
         )
 
+        cursor.execute(
+            """
+                CREATE TABLE IF NOT EXISTS Rotation_Configs(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    config_name TEXT UNIQUE NOT NULL,
+                    config TEXT NOT NULL
+                );
+            """
+        )
+
         con.commit()
 
 
