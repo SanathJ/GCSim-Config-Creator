@@ -36,12 +36,12 @@ def create_table():
                     ascension INTEGER NOT NULL,
                     talent TEXT NOT NULL,
                     constellation INTEGER NOT NULL,
-                    weapon INTEGER NOT NULL REFERENCES Weapons(id) ON UPDATE RESTRICT,
-                    flower INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT,
-                    plume INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT,
-                    sands INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT,
-                    goblet INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT,
-                    circlet INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT
+                    weapon INTEGER NOT NULL REFERENCES Weapons(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    flower INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    plume INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    sands INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    goblet INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    circlet INTEGER REFERENCES Artifacts(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                 );
             """
         )
@@ -103,11 +103,11 @@ def create_table():
                 CREATE TABLE IF NOT EXISTS Full_Configs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     config_name TEXT UNIQUE NOT NULL,
-                    character1 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
-                    character2 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
-                    character3 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
-                    character4 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT,
-                    rotation TEXT REFERENCES Rotation_Configs(config_name) ON UPDATE RESTRICT
+                    character1 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    character2 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    character3 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    character4 TEXT REFERENCES Character_Configs(config_name) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                    rotation TEXT REFERENCES Rotation_Configs(config_name) ON UPDATE RESTRICT ON DELETE RESTRICT
                 );
             """
         )

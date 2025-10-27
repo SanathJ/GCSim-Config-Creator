@@ -1,8 +1,12 @@
 venv/
 __pycache__
 
+gcsim/
+out/
+
 export.json
 
 test.py
 
 *.db
+*.gz

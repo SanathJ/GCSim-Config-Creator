@@ -2,9 +2,10 @@ from tkinter import *
 from tkinter import ttk
 
 from .character_manager import setup_character_manager_frame
+from .config_manager import setup_config_manager_frame
 from .import_manager import setup_import_manager_frame
 from .rotation_manager import setup_rotation_manager_frame
-from .config_manager import setup_config_manager_frame
+from .sim_manager import setup_sim_manager_frame
 
 
 # setup
@@ -22,10 +23,12 @@ def main():
     import_manager_frame = setup_import_manager_frame(root, notebook)
     rotation_manager_frame = setup_rotation_manager_frame(root, notebook)
     config_manager_frame = setup_config_manager_frame(root, notebook)
+    sim_manager_frame = setup_sim_manager_frame(root, notebook)
 
     notebook.add(character_manager_frame, text="Character Manager")
     notebook.add(import_manager_frame, text="Import Manager")
     notebook.add(rotation_manager_frame, text="Rotation Manager")
     notebook.add(config_manager_frame, text="Config Manager")
+    notebook.add(sim_manager_frame, text="Sim Manager")
 
     root.mainloop()
