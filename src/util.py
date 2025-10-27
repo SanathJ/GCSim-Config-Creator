@@ -1,7 +1,8 @@
 import re
+import sqlite3
 
 
-def GOODStatToSimStat(key):
+def GOODStatToSimStat(key: str):
     match key:
         case "hp":
             return "hp"
@@ -43,7 +44,7 @@ def GOODStatToSimStat(key):
             return "dendro%"
 
 
-def AscensionToMaxLevel(ascension):
+def AscensionToMaxLevel(ascension: int):
     match ascension:
         case 0:
             return 20
@@ -61,12 +62,12 @@ def AscensionToMaxLevel(ascension):
             return 90
 
 
-def dict_factory(cursor, row):
+def dict_factory(cursor: sqlite3.Cursor, row):
     fields = [column[0] for column in cursor.description]
     return {key: value for key, value in zip(fields, row)}
 
 
-def GOODKeytoGCSIMKey(goodKey):
+def GOODKeytoGCSIMKey(goodKey: str) -> str:
     match goodKey:
         case "KaedeharaKazuha":
             return "kazuha"

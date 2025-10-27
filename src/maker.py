@@ -1,10 +1,12 @@
 # uses sqlite database to create gcsim config files, ready to be used with optimisation
-import util
-import sqlite3
 import json
+import sqlite3
+from typing import Any, LiteralString
+
+import util
 
 
-def charToConfig(char):
+def charToConfig(char: dict[str, Any]) -> str:
     config = ""
     config += f"{char['name']} char lvl={char['lvl']} cons={char['cons']} talent={char['talent']};\n"
     config += f"{char['name']} add weapon=\"{char['weapon']['weapon']}\" refine={char['weapon']['refine']} lvl={char['weapon']['lvl']};\n"
@@ -25,7 +27,7 @@ def charToConfig(char):
     return config
 
 
-def makeCharConfig(c):
+def makeCharConfig(c: str) -> dict[str, Any]:
     with sqlite3.connect("configs.db") as con:
         con.row_factory = util.dict_factory
 
@@ -142,17 +144,17 @@ def makeCharConfig(c):
         }
 
 
-def makeTeamConfig(team):
+def makeTeamConfig(team: list[str]) -> LiteralString:
     config = "\n".join([makeCharConfig(c)["config"] for c in team])
     return config
 
 
-def writeConfig(outfile, team):
+def writeConfig(outfile: str, team: list[str]):
     with open(outfile, "w") as f:
         f.write(makeTeamConfig(team)["config"])
 
 
-def saveConfig(c, name):
+def saveConfig(c: str, name: str):
     with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
 

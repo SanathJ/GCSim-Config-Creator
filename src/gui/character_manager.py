@@ -1,13 +1,12 @@
+import sqlite3
 from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
-import sqlite3
 import util
 
 
-def refresh_textbox(display_config, tree):
+def refresh_textbox(display_config: ScrolledText, tree: ttk.Treeview):
     display_config.configure(state="normal")
     display_config.delete("1.0", "end")
     if tree.selection():
@@ -55,7 +54,7 @@ def refresh_character_manager_tree():
     refresh_treeview(g_tree)
 
 
-def delete_char_config(display_config, tree):
+def delete_char_config(display_config: ScrolledText, tree: ttk.Treeview):
     if not tree.selection():
         return
 
@@ -81,12 +80,12 @@ def delete_char_config(display_config, tree):
     refresh_treeview(tree)
 
 
-def rename_char_config(root, display_config, tree):
+def rename_char_config(root: Tk, display_config: ScrolledText, tree: ttk.Treeview):
     if not tree.selection():
         return
 
     # Function to handle the renaming process
-    def open_rename_dialog(item_id):
+    def open_rename_dialog(item_id: tuple[str, ...]):
         # Create a new top-level window for the rename dialog
         rename_dialog = Toplevel(root)
         rename_dialog.title("Rename Item")
@@ -154,7 +153,7 @@ def rename_char_config(root, display_config, tree):
     refresh_treeview(tree)
 
 
-def setup_character_manager_frame(root, notebook):
+def setup_character_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     character_manager_frame = ttk.Frame(notebook)
     character_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
 

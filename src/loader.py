@@ -6,7 +6,7 @@ import sqlite3
 characters = {}
 
 
-def load(db):
+def load(db: object):
 
     for char in db["characters"]:
         if char["key"].startswith("Traveler"):
@@ -115,7 +115,7 @@ def create_table():
         con.commit()
 
 
-def reset_temp_tables(con, cursor):
+def reset_temp_tables(con: sqlite3.Connection, cursor: sqlite3.Cursor):
     for table in ["Characters", "Weapons", "Artifacts"]:
         cursor.execute(f"DROP TABLE IF EXISTS {table}")
     con.commit()

@@ -1,11 +1,10 @@
+import sqlite3
 from tkinter import *
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 from .import_manager import get_character_config_list
 from .rotation_manager import get_rotation_config_list
-
-import sqlite3
 
 
 def refresh_preview(
@@ -61,7 +60,7 @@ def save_full_config(
         )
 
 
-def get_full_config_list():
+def get_full_config_list() -> list[str]:
     with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
         cursor.execute(
@@ -127,7 +126,7 @@ def load_full_config(
         save_name.set(listbox.get())
 
 
-def setup_config_manager_frame(root, notebook):
+def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     config_manager_frame = ttk.Frame(notebook)
     config_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
     config_manager_frame.grid_columnconfigure(0, weight=1)

@@ -7,13 +7,10 @@ from tkinter import *
 from tkinter import filedialog, ttk
 from tkinter.scrolledtext import ScrolledText
 
-import loader
-import maker
-
 from .config_manager import get_full_config_list
 
 
-def add_sim_config(config_list, selected_config):
+def add_sim_config(config_list: ttk.Treeview, selected_config: str):
     if not selected_config:
         return
 
@@ -24,13 +21,13 @@ def add_sim_config(config_list, selected_config):
     config_list.insert("", "end", iid=selected_config, text=selected_config)
 
 
-def remove_sim_config(config_list):
+def remove_sim_config(config_list: ttk.Treeview):
     if not config_list.selection():
         return
     config_list.delete(config_list.selection()[0])
 
 
-def exe_selector(root, entry):
+def exe_selector(entry: Entry):
     exefile = filedialog.askopenfilename(
         title="Select GCSim Executable",
         filetypes=[("GCSim Executable", ["*.exe"])],
@@ -44,7 +41,12 @@ def exe_selector(root, entry):
     entry.configure(state="disabled")
 
 
-def launch_handler(config_list, exe_path, single=False, browser=False):
+def launch_handler(
+    config_list: ttk.Treeview,
+    exe_path: str,
+    single: bool = False,
+    browser: bool = False,
+):
     maindir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     )
@@ -118,7 +120,7 @@ def launch_handler(config_list, exe_path, single=False, browser=False):
                 print(f"{selected_config}:\n" + sim.stdout.decode("utf-8"))
 
 
-def refresh_textbox(display_config, selected_config):
+def refresh_textbox(display_config: ScrolledText, selected_config: str):
     display_config.configure(state="normal")
     display_config.delete("1.0", "end")
 
@@ -168,7 +170,7 @@ def refresh_textbox(display_config, selected_config):
     display_config.configure(state="disabled")
 
 
-def setup_sim_manager_frame(root, notebook):
+def setup_sim_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     sim_manager_frame = ttk.Frame(notebook)
     sim_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
     sim_manager_frame.grid_columnconfigure(1, weight=1)
@@ -245,7 +247,7 @@ def setup_sim_manager_frame(root, notebook):
     ttk.Button(
         right_sidebar_frame,
         text="Select GCSim EXE",
-        command=lambda: exe_selector(root, exepath),
+        command=lambda: exe_selector(exepath),
     ).grid(column=3, row=3, sticky=(E, W), pady=(15, 0))
 
     ttk.Button(

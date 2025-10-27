@@ -1,11 +1,10 @@
+import sqlite3
 from tkinter import *
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
-import sqlite3
 
-
-def get_rotation_config_list():
+def get_rotation_config_list() -> list[str]:
     with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
         cursor.execute(
@@ -73,7 +72,7 @@ def save_rotation_config(display_config: ScrolledText, save_name: StringVar):
         )
 
 
-def setup_rotation_manager_frame(root, notebook):
+def setup_rotation_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     rotation_manager_frame = ttk.Frame(notebook)
     rotation_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
 

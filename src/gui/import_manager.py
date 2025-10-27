@@ -1,16 +1,15 @@
+import json
+import os
+import sqlite3
+import sys
 from tkinter import *
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 from tkinter.scrolledtext import ScrolledText
 
 import loader
 import maker
-from .character_manager import refresh_character_manager_tree
 
-import sqlite3
-import json
-import sys
-import os
+from .character_manager import refresh_character_manager_tree
 
 
 def refresh_character_list(tree: ttk.Treeview):
@@ -34,7 +33,7 @@ def refresh_character_list(tree: ttk.Treeview):
             tree.insert("", "end", text=character[0], values=character[1:])
 
 
-def refresh_new_config(new_config, tree):
+def refresh_new_config(new_config: ScrolledText, tree: ttk.Treeview):
     new_config.configure(state="normal")
     new_config.delete("1.0", "end")
     if tree.selection():
@@ -44,7 +43,7 @@ def refresh_new_config(new_config, tree):
     new_config.configure(state="disabled")
 
 
-def refresh_old_config(config_name, mode, old_config):
+def refresh_old_config(config_name: StringVar, mode: str, old_config: ScrolledText):
     if mode == "not":
         return
 
@@ -69,7 +68,7 @@ def refresh_old_config(config_name, mode, old_config):
     old_config.configure(state="disabled")
 
 
-def get_character_config_list():
+def get_character_config_list() -> list[str]:
     with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
         cursor.execute(
@@ -82,7 +81,7 @@ def get_character_config_list():
         return configs
 
 
-def get_clipboard(root):
+def get_clipboard(root: Tk) -> str | None:
     try:
         # Access clipboard content
         clipboard_content = root.clipboard_get()
@@ -91,7 +90,9 @@ def get_clipboard(root):
         print("Clipboard is empty or can't be accessed.", file=sys.stderr)
 
 
-def load_button_handler(root, from_json, tree, new_config):
+def load_button_handler(
+    root: Tk, from_json: bool, tree: ttk.Treeview, new_config: ScrolledText
+):
     db = {}
     if from_json:
         jsonfile = filedialog.askopenfilename(
@@ -133,7 +134,9 @@ def load_button_handler(root, from_json, tree, new_config):
     refresh_new_config(new_config, tree)
 
 
-def save_character_config(cb_entry, tree, old_config):
+def save_character_config(
+    cb_entry: StringVar, tree: ttk.Treeview, old_config: ScrolledText
+):
     if not cb_entry.get() or not tree.selection():
         return
 
@@ -142,7 +145,7 @@ def save_character_config(cb_entry, tree, old_config):
     refresh_character_manager_tree()
 
 
-def setup_import_manager_frame(root, notebook):
+def setup_import_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     import_manager_frame = ttk.Frame(notebook)
     import_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
 
