@@ -25,10 +25,10 @@ def main():
     config_manager_frame = setup_config_manager_frame(root, notebook)
     sim_manager_frame = setup_sim_manager_frame(root, notebook)
 
-    notebook.add(character_manager_frame, text="Character Manager")
-    notebook.add(import_manager_frame, text="Import Manager")
-    notebook.add(rotation_manager_frame, text="Rotation Manager")
-    notebook.add(config_manager_frame, text="Config Manager")
-    notebook.add(sim_manager_frame, text="Sim Manager")
+    notebook.add(import_manager_frame, text="Import")
+    notebook.add(character_manager_frame, text="Characters")
+    notebook.add(rotation_manager_frame, text="Rotations")
+    notebook.add(config_manager_frame, text="Configs")
+    notebook.add(sim_manager_frame, text="Sim")
 
     root.mainloop()
