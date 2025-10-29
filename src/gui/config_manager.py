@@ -199,10 +199,10 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
 
     info_label = ttk.Label(
         sidebar_frame,
-        text="Status: Idle",
+        text="",
         font=("TkDefaultFont", 16),
     )
-    info_label.grid(column=0, row=5, columnspan=5, sticky=(N, S, E, W))
+    info_label.grid(column=0, row=3, columnspan=5, sticky=(N, S, E, W))
 
     # main
     char_array = []
@@ -286,14 +286,14 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
         column=0, row=2, columnspan=5, sticky=(E, W), pady=5
     )
 
-    ttk.Button(
-        sidebar_frame,
-        text="Run Config in Browser",
-        # command=lambda: ,
-    ).grid(column=0, row=3, columnspan=5, sticky=(E, W)),
+    # ttk.Button(
+    #     sidebar_frame,
+    #     text="Run Config in Browser",
+    #     # command=lambda: ,
+    # ).grid(column=0, row=3, columnspan=5, sticky=(E, W)),
 
-    ttk.Separator(sidebar_frame, orient=HORIZONTAL).grid(
-        column=0, row=4, columnspan=5, sticky=(E, W), pady=5
-    )
+    # ttk.Separator(sidebar_frame, orient=HORIZONTAL).grid(
+    #     column=0, row=4, columnspan=5, sticky=(E, W), pady=5
+    # )
 
     return config_manager_frame
