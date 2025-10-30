@@ -35,7 +35,7 @@ def refresh_preview(
     characters: list[ttk.Combobox],
     rotation: ttk.Combobox,
     preview: ScrolledText,
-    info_label: Label,
+    info_label: ttk.Label,
     sidebar_frame: ttk.Frame,
 ):
     full_config = ""
@@ -106,7 +106,7 @@ def save_full_config(
     characters: list[ttk.Combobox],
     rotation: ttk.Combobox,
     save_name: StringVar,
-    info_label: Label,
+    info_label: ttk.Label,
     sidebar_frame: ttk.Frame,
 ):
     if not save_name.get():
@@ -160,7 +160,7 @@ def get_full_config_list() -> list[str]:
 def delete_full_config(
     listbox: ttk.Combobox,
     save_name: StringVar,
-    info_label: Label,
+    info_label: ttk.Label,
     sidebar_frame: ttk.Frame,
 ):
     if not listbox.get():
@@ -192,7 +192,7 @@ def load_full_config(
     rotation: ttk.Combobox,
     save_name: StringVar,
     preview: ScrolledText,
-    info_label: Label,
+    info_label: ttk.Label,
     sidebar_frame: ttk.Frame,
 ):
     if not listbox.get():

@@ -156,9 +156,11 @@ def rename_char_config(root: Tk, display_config: ScrolledText, tree: ttk.Treevie
 def setup_character_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     character_manager_frame = ttk.Frame(notebook)
     character_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+    character_manager_frame.grid_rowconfigure(0, weight=1)
 
     main_config_manager_frame = ttk.Frame(character_manager_frame)
-    main_config_manager_frame.grid(column=0, row=0, padx=10, pady=10)
+    main_config_manager_frame.grid(column=0, row=0, sticky=(N, S, W), padx=10, pady=10)
+    main_config_manager_frame.grid_rowconfigure(0, weight=3)
 
     # button sidebar
     sidebar_frame = ttk.Frame(character_manager_frame)
@@ -194,7 +196,7 @@ def setup_character_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame
     for x, width in zip(headings, column_widths):
         tree.column(x, anchor="center", width=width)
         tree.heading(x, text="Character Config Name" if x == "#0" else x.title())
-    tree.grid(column=0, row=0)
+    tree.grid(column=0, row=0, sticky=(N, S, E, W))
     global g_tree
     g_tree = tree
 
