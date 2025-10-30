@@ -67,6 +67,7 @@ def dict_factory(cursor: sqlite3.Cursor, row):
     return {key: value for key, value in zip(fields, row)}
 
 
+# https://github.com/genshinsim/gcsim/blob/main/ui/packages/ui/src/Pages/Simulator/Components/GOOD/GOODToSrl.functions.ts
 def GOODKeytoGCSIMKey(goodKey: str) -> str:
     match goodKey:
         case "KaedeharaKazuha":

@@ -1,15 +1,36 @@
 import json
 import os
 import sqlite3
-import sys
 from tkinter import *
-from tkinter import filedialog, ttk
+from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
+from typing import Literal
 
 import loader
 import maker
 
 from .character_manager import refresh_character_manager_tree
+
+id = None
+
+
+def timed_info_label(
+    sidebar_frame: ttk.Frame,
+    info_label: ttk.Label,
+    message: str,
+    type: Literal["success", "warning"],
+    delay: int = 5000,
+):
+    info_label.configure(wraplength=sidebar_frame.winfo_width() - 20)
+    if type == "success":
+        info_label.configure(foreground="green")
+    else:
+        info_label.configure(foreground="red")
+    info_label.configure(text=message)
+    global id
+    if id:
+        info_label.after_cancel(id)
+    id = info_label.after(delay, lambda: info_label.configure(text=""))
 
 
 def refresh_character_list(tree: ttk.Treeview):
@@ -81,80 +102,154 @@ def get_character_config_list() -> list[str]:
         return configs
 
 
-def get_clipboard(root: Tk) -> str | None:
+def get_clipboard(
+    root: Tk, sidebar_frame: ttk.Frame, info_label: ttk.Label
+) -> str | None:
     try:
         # Access clipboard content
         clipboard_content = root.clipboard_get()
         return clipboard_content
     except TclError:
-        print("Clipboard is empty or can't be accessed.", file=sys.stderr)
+        timed_info_label(
+            sidebar_frame,
+            info_label,
+            "Clipboard is empty or can't be accessed.",
+            "warning",
+        )
 
 
 def load_button_handler(
-    root: Tk, from_json: bool, tree: ttk.Treeview, new_config: ScrolledText
+    root: Tk,
+    from_json: bool,
+    tree: ttk.Treeview,
+    new_config: ScrolledText,
+    sidebar_frame: ttk.Frame,
+    info_label: ttk.Label,
 ):
     db = {}
     if from_json:
         jsonfile = filedialog.askopenfilename(
             title="JSON file",
-            filetypes=[("GCSim JSON File", ["*.json"])],
+            filetypes=[("GOOD JSON File", ["*.json"])],
         )
         if not os.path.isfile(jsonfile):
-            print("This file does not exist.", file=sys.stderr)
+            timed_info_label(
+                sidebar_frame, info_label, "This file does not exist.", "warning"
+            )
             return
 
         with open(jsonfile, "r") as f:
             try:
                 db = json.load(f)
             except:
-                print(
-                    "There was an error when loading json from file.", file=sys.stderr
+                timed_info_label(
+                    sidebar_frame,
+                    info_label,
+                    "Error loading JSON from file.",
+                    "warning",
                 )
                 return
     else:
         try:
-            db = json.loads(get_clipboard(root))
+            db = json.loads(get_clipboard(root, sidebar_frame, info_label))
         except:
-            print(
-                "There was an error when loading json from clipboard.", file=sys.stderr
+            timed_info_label(
+                sidebar_frame,
+                info_label,
+                "Error loading JSON from clipboard.",
+                "warning",
             )
             return
 
     if not db:
-        print("Cannot load GCSim database", file=sys.stderr)
+        timed_info_label(sidebar_frame, info_label, "Failed to load.", "warning")
         return
 
     if db.get("format") != "GOOD":
-        print("Incorrect database format", file=sys.stderr)
+        timed_info_label(
+            sidebar_frame, info_label, "Incorrect database format.", "warning"
+        )
         return
 
-    loader.load(db)
+    try:
+        loader.load(db)
+    except KeyError as e:
+        timed_info_label(
+            sidebar_frame,
+            info_label,
+            f"Error importing character data: missing key {e}. Incomplete exports from scanners may result in unexpected errors. Use a complete GOOD export or import from Genshin Optimizer.",
+            "warning",
+            10000,
+        )
+        return
     loader.export()
     refresh_character_list(tree)
     refresh_new_config(new_config, tree)
 
+    timed_info_label(
+        sidebar_frame, info_label, "Character(s) imported successfully.", "success"
+    )
+
 
 def save_character_config(
-    cb_entry: StringVar, tree: ttk.Treeview, old_config: ScrolledText
+    cb_entry: StringVar,
+    tree: ttk.Treeview,
+    old_config: ScrolledText,
+    sidebar_frame: ttk.Frame,
+    info_label: ttk.Label,
 ):
     if not cb_entry.get() or not tree.selection():
         return
+
+    # warning messagebox for existing name
+    with sqlite3.connect("configs.db") as con:
+        cursor = con.cursor()
+
+        # warning messagebox for existing name
+        cursor.execute(
+            """
+            SELECT 1
+            FROM Character_Configs
+            WHERE config_name = ?
+            """,
+            (cb_entry.get(),),
+        )
+        if cursor.fetchone():
+            res = messagebox.askokcancel(
+                "Overwrite Config",
+                f"A config with the name {cb_entry.get()} already exists. Saving will overwrite the existing config. Proceed?",
+            )
+            if not res:
+                return
 
     maker.saveConfig((tree.item(tree.selection())["text"]), cb_entry.get())
     refresh_old_config(cb_entry, "write", old_config)
     refresh_character_manager_tree()
 
+    timed_info_label(
+        sidebar_frame, info_label, f"{cb_entry.get()} saved successfully.", "success"
+    )
+
 
 def setup_import_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     import_manager_frame = ttk.Frame(notebook)
     import_manager_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+    import_manager_frame.grid_rowconfigure(0, weight=1)
 
     main_import_manager_frame = ttk.Frame(import_manager_frame)
-    main_import_manager_frame.grid(column=0, row=0)
+    main_import_manager_frame.grid(column=0, row=0, sticky=(N, S, W), padx=10, pady=10)
+    main_import_manager_frame.grid_rowconfigure(0, weight=1)
 
     # button sidebar
     sidebar_frame = ttk.Frame(import_manager_frame)
-    sidebar_frame.grid(column=1, row=0)
+    sidebar_frame.grid(column=1, row=0, sticky=(N, S), pady=10)
+
+    info_label = ttk.Label(
+        sidebar_frame,
+        text="",
+        font=("TkDefaultFont", 16),
+    )
+    info_label.grid(column=0, row=3, columnspan=4, sticky=(N, S, E, W))
 
     # main
     tree = ttk.Treeview(
@@ -184,7 +279,7 @@ def setup_import_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     for x, width in zip(headings, column_widths):
         tree.column(x, anchor="center", width=width)
         tree.heading(x, text="Character" if x == "#0" else x.title())
-    tree.grid(column=0, row=0)
+    tree.grid(column=0, row=0, sticky=(N, S, E, W))
 
     tree_s = ttk.Scrollbar(
         main_import_manager_frame, orient=VERTICAL, command=tree.yview
@@ -204,18 +299,18 @@ def setup_import_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     ttk.Label(old_config_frame, text="Old Config").grid(column=0, row=0)
     old_config = ScrolledText(old_config_frame, height=10)
     old_config.configure(state="disabled")
-    old_config.grid(column=0, row=1, sticky=(E, W))
+    old_config.grid(column=0, row=1, sticky=(S, E, W))
     old_config_frame.grid_columnconfigure(0, weight=1)
 
     ttk.Label(new_config_frame, text="New Config").grid(column=0, row=0)
     new_config = ScrolledText(new_config_frame, height=10)
     new_config.configure(state="disabled")
-    new_config.grid(column=0, row=1, sticky=(E, W))
+    new_config.grid(column=0, row=1, sticky=(S, E, W))
     new_config_frame.grid_columnconfigure(0, weight=1)
 
     pane.add(old_config_frame)
     pane.add(new_config_frame)
-    pane.grid(row=1, columnspan=2, sticky=(E, W))
+    pane.grid(row=1, columnspan=2, sticky=(S, E, W))
 
     # buttons
 
@@ -241,18 +336,28 @@ def setup_import_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     ttk.Button(
         sidebar_frame,
         text="Save Character",
-        command=lambda: save_character_config(cb_entry, tree, old_config),
+        command=lambda: save_character_config(
+            cb_entry, tree, old_config, sidebar_frame, info_label
+        ),
     ).grid(column=3, row=1, sticky=(E, W))
 
     ttk.Button(
         sidebar_frame,
-        text="Load from JSON file",
-        command=lambda: load_button_handler(root, True, tree, new_config),
+        text="Load from GOOD JSON file",
+        command=lambda: load_button_handler(
+            root, True, tree, new_config, sidebar_frame, info_label
+        ),
     ).grid(column=0, row=0, columnspan=2, sticky=(E, W))
     ttk.Button(
         sidebar_frame,
         text="Load from clipboard",
-        command=lambda: load_button_handler(root, False, tree, new_config),
+        command=lambda: load_button_handler(
+            root, False, tree, new_config, sidebar_frame, info_label
+        ),
     ).grid(column=2, row=0, columnspan=2, sticky=(E, W))
+
+    ttk.Separator(sidebar_frame, orient=HORIZONTAL).grid(
+        column=0, row=2, columnspan=4, sticky=(E, W), pady=5
+    )
 
     return import_manager_frame

@@ -1,29 +1,66 @@
 import sqlite3
 from tkinter import *
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
+from typing import Literal
 
 from .import_manager import get_character_config_list
 from .rotation_manager import get_rotation_config_list
 
+id = None
+
+
+def timed_info_label(
+    sidebar_frame: ttk.Frame,
+    info_label: ttk.Label,
+    message: str,
+    type: Literal["success", "warning"],
+    delay: int | None = 5000,
+):
+    info_label.configure(wraplength=sidebar_frame.winfo_width() - 20)
+    if type == "success":
+        info_label.configure(foreground="green")
+    else:
+        info_label.configure(foreground="red")
+    info_label.configure(text=message)
+    global id
+    if id:
+        info_label.after_cancel(id)
+
+    if delay:
+        id = info_label.after(delay, lambda: info_label.configure(text=""))
+
 
 def refresh_preview(
-    characters: list[ttk.Combobox], rotation: ttk.Combobox, preview: ScrolledText
+    characters: list[ttk.Combobox],
+    rotation: ttk.Combobox,
+    preview: ScrolledText,
+    info_label: ttk.Label,
+    sidebar_frame: ttk.Frame,
 ):
     full_config = ""
     characters = [x.get() for x in characters if x.get()]
 
+    info_list = []
+
     with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
-        cursor.execute(
-            f""" 
-            SELECT config
-            FROM Character_Configs
-            WHERE config_name IN({','.join(['?'] * len(characters))})
-            """,
-            tuple(characters),
-        )
-        full_config += "\n".join([x for (x,) in cursor.fetchall()])
+
+        char_configs = []
+        for i in range(len(characters)):
+            cursor.execute(
+                f""" 
+                SELECT config, character
+                FROM Character_Configs
+                WHERE config_name = ?
+                """,
+                (characters[i],),
+            )
+            char_configs.append(cursor.fetchone())
+        full_config += "\n".join([x for (x, _) in char_configs if x])
+
+        if len(set([c for (_, c) in char_configs if c])) < len(char_configs):
+            info_list.append("Duplicate characters detected in the configuration.")
 
         cursor.execute(
             f""" 
@@ -36,6 +73,28 @@ def refresh_preview(
         row = cursor.fetchone()
         if row:
             full_config += "\n" + row[0]
+        else:
+            info_list.append("No rotation selected.")
+
+        if len(characters) == 0 and row:
+            info_list.append("No characters selected.")
+
+    if info_list:
+        timed_info_label(
+            sidebar_frame,
+            info_label,
+            "\n".join(info_list),
+            "warning",
+            None,
+        )
+    else:
+        timed_info_label(
+            sidebar_frame,
+            info_label,
+            "",
+            "success",
+            None,
+        )
 
     preview.configure(state="normal")
     preview.delete("1.0", "end"),
@@ -44,19 +103,44 @@ def refresh_preview(
 
 
 def save_full_config(
-    characters: list[ttk.Combobox], rotation: ttk.Combobox, save_name: StringVar
+    characters: list[ttk.Combobox],
+    rotation: ttk.Combobox,
+    save_name: StringVar,
+    info_label: ttk.Label,
+    sidebar_frame: ttk.Frame,
 ):
     if not save_name.get():
         return
     characters = [x.get() if x.get() else None for x in characters]
     with sqlite3.connect("configs.db") as con:
         cursor = con.cursor()
+
+        # warning messagebox for existing name
+        cursor.execute(
+            """
+            SELECT 1
+            FROM Full_Configs
+            WHERE config_name = ?
+            """,
+            (save_name.get(),),
+        )
+        if cursor.fetchone():
+            res = messagebox.askokcancel(
+                "Overwrite Config",
+                f"A config with the name {save_name.get()} already exists. Saving will overwrite the existing config. Proceed?",
+            )
+            if not res:
+                return
+
         cursor.execute(
             """
             INSERT OR REPLACE INTO Full_Configs (config_name, rotation, character1, character2, character3, character4)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (save_name.get(), rotation.get() if rotation.get() else None, *characters),
+        )
+        timed_info_label(
+            sidebar_frame, info_label, f"Config {save_name.get()} saved.", "success"
         )
 
 
@@ -73,7 +157,12 @@ def get_full_config_list() -> list[str]:
     return configs
 
 
-def delete_full_config(listbox: ttk.Combobox, save_name: StringVar):
+def delete_full_config(
+    listbox: ttk.Combobox,
+    save_name: StringVar,
+    info_label: ttk.Label,
+    sidebar_frame: ttk.Frame,
+):
     if not listbox.get():
         return
 
@@ -87,6 +176,12 @@ def delete_full_config(listbox: ttk.Combobox, save_name: StringVar):
             (listbox.get(),),
         )
 
+    timed_info_label(
+        sidebar_frame,
+        info_label,
+        f"Config {listbox.get()} deleted.",
+        "success",
+    )
     listbox.set("")
     save_name.set("")
 
@@ -97,6 +192,8 @@ def load_full_config(
     rotation: ttk.Combobox,
     save_name: StringVar,
     preview: ScrolledText,
+    info_label: ttk.Label,
+    sidebar_frame: ttk.Frame,
 ):
     if not listbox.get():
         return
@@ -122,8 +219,15 @@ def load_full_config(
             else:
                 cb.set("")
 
-        refresh_preview(characters, rotation, preview)
+        refresh_preview(characters, rotation, preview, info_label, sidebar_frame)
         save_name.set(listbox.get())
+
+    timed_info_label(
+        sidebar_frame,
+        info_label,
+        f"Config {listbox.get()} loaded.",
+        "success",
+    )
 
 
 def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
@@ -142,7 +246,14 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
 
     # button sidebar
     sidebar_frame = ttk.Frame(config_manager_frame)
-    sidebar_frame.grid(column=1, row=0, rowspan=2)
+    sidebar_frame.grid(column=1, row=1, rowspan=1, sticky=(N, S), pady=10)
+
+    info_label = ttk.Label(
+        sidebar_frame,
+        text="",
+        font=("TkDefaultFont", 16),
+    )
+    info_label.grid(column=0, row=3, columnspan=5, sticky=(N, S, E, W))
 
     # main
     char_array = []
@@ -161,7 +272,9 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
         cb.grid(column=i, row=1, padx=10)
         cb.bind(
             "<<ComboboxSelected>>",
-            lambda e: refresh_preview(char_array, rotation, preview),
+            lambda e: refresh_preview(
+                char_array, rotation, preview, info_label, sidebar_frame
+            ),
         )
 
     ttk.Label(options_frame, text=f"Rotation").grid(column=4, row=0, padx=10)
@@ -173,7 +286,9 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
     rotation.grid(column=4, row=1, padx=10)
     rotation.bind(
         "<<ComboboxSelected>>",
-        lambda e: refresh_preview(char_array, rotation, preview),
+        lambda e: refresh_preview(
+            char_array, rotation, preview, info_label, sidebar_frame
+        ),
     )
 
     preview = ScrolledText(main_rotation_manager_frame)
@@ -191,7 +306,7 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
         state="readonly",
         postcommand=lambda: listbox.configure(values=get_full_config_list()),
     )
-    listbox.grid(column=0, row=0, columnspan=3, sticky=(E, W))
+    listbox.grid(column=0, row=0, columnspan=3, sticky=(N, E, W))
 
     save_name = StringVar()
     ttk.Entry(sidebar_frame, textvariable=save_name).grid(
@@ -202,20 +317,38 @@ def setup_config_manager_frame(root: Tk, notebook: ttk.Notebook) -> ttk.Frame:
         sidebar_frame,
         text="Load Config",
         command=lambda: load_full_config(
-            listbox, char_array, rotation, save_name, preview
+            listbox, char_array, rotation, save_name, preview, info_label, sidebar_frame
         ),
     ).grid(column=3, row=0, sticky=(E, W))
 
     ttk.Button(
         sidebar_frame,
         text="Delete Config",
-        command=lambda: delete_full_config(listbox, save_name),
+        command=lambda: delete_full_config(
+            listbox, save_name, info_label, sidebar_frame
+        ),
     ).grid(column=4, row=0, sticky=(E, W))
 
     ttk.Button(
         sidebar_frame,
         text="Save Full Config",
-        command=lambda: save_full_config(char_array, rotation, save_name),
+        command=lambda: save_full_config(
+            char_array, rotation, save_name, info_label, sidebar_frame
+        ),
     ).grid(column=3, row=1, columnspan=2, sticky=(E, W))
+
+    ttk.Separator(sidebar_frame, orient=HORIZONTAL).grid(
+        column=0, row=2, columnspan=5, sticky=(E, W), pady=5
+    )
+
+    # ttk.Button(
+    #     sidebar_frame,
+    #     text="Run Config in Browser",
+    #     # command=lambda: ,
+    # ).grid(column=0, row=3, columnspan=5, sticky=(E, W)),
+
+    # ttk.Separator(sidebar_frame, orient=HORIZONTAL).grid(
+    #     column=0, row=4, columnspan=5, sticky=(E, W), pady=5
+    # )
 
     return config_manager_frame
