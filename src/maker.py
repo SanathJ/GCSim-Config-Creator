@@ -15,7 +15,10 @@ def charToConfig(char: dict[str, Any]) -> str:
         config += f"{char['name']} add set=\"{k}\" count={v};\n"
 
     config += f"{char['name']} add stats"
+    config += f" {"hp"}={char["mainStats"]['hp']}"
     for k, v in char["mainStats"].items():
+        if k == "hp":
+            continue
         config += f" {k}={v}"
     config += ";\n"
 
